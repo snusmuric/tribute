@@ -83,33 +83,50 @@
   }
 
   if (!Array.prototype.find) {
-    Array.prototype.find = function (predicate) {
-      if (this === null) {
-        throw new TypeError('Array.prototype.find called on null or undefined');
-      }
-
-      if (typeof predicate !== 'function') {
-        throw new TypeError('predicate must be a function');
-      }
-
-      var list = Object(this);
-      var length = list.length >>> 0;
-      var thisArg = arguments[1];
-      var value;
-
-      for (var i = 0; i < length; i++) {
-        value = list[i];
-
-        if (predicate.call(thisArg, value, i, list)) {
-          return value;
+    Object.defineProperty(Array.prototype, 'find', {
+      value: function value(predicate) {
+        // 1. Let O be ? ToObject(this value).
+        if (this == null) {
+          throw TypeError('"this" is null or not defined');
         }
-      }
 
-      return undefined;
-    };
+        var o = Object(this); // 2. Let len be ? ToLength(? Get(O, "length")).
+
+        var len = o.length >>> 0; // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+
+        if (typeof predicate !== 'function') {
+          throw TypeError('predicate must be a function');
+        } // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+
+
+        var thisArg = arguments[1]; // 5. Let k be 0.
+
+        var k = 0; // 6. Repeat, while k < len
+
+        while (k < len) {
+          // a. Let Pk be ! ToString(k).
+          // b. Let kValue be ? Get(O, Pk).
+          // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+          // d. If testResult is true, return kValue.
+          var kValue = o[k];
+
+          if (predicate.call(thisArg, kValue, k, o)) {
+            return kValue;
+          } // e. Increase k by 1.
+
+
+          k++;
+        } // 7. Return undefined.
+
+
+        return undefined;
+      },
+      configurable: true,
+      writable: true
+    });
   }
 
-  if (window && typeof window.CustomEvent !== "function") {
+  if (typeof window !== 'undefined' && typeof window.CustomEvent !== "function") {
     var CustomEvent$1 = function CustomEvent(event, params) {
       params = params || {
         bubbles: false,
@@ -142,16 +159,16 @@
         element.boundKeydown = this.keydown.bind(element, this);
         element.boundKeyup = this.keyup.bind(element, this);
         element.boundInput = this.input.bind(element, this);
-        element.addEventListener("keydown", element.boundKeydown, false);
-        element.addEventListener("keyup", element.boundKeyup, false);
-        element.addEventListener("input", element.boundInput, false);
+        element.addEventListener("keydown", element.boundKeydown, true);
+        element.addEventListener("keyup", element.boundKeyup, true);
+        element.addEventListener("input", element.boundInput, true);
       }
     }, {
       key: "unbind",
       value: function unbind(element) {
-        element.removeEventListener("keydown", element.boundKeydown, false);
-        element.removeEventListener("keyup", element.boundKeyup, false);
-        element.removeEventListener("input", element.boundInput, false);
+        element.removeEventListener("keydown", element.boundKeydown, true);
+        element.removeEventListener("keyup", element.boundKeyup, true);
+        element.removeEventListener("input", element.boundInput, true);
         delete element.boundKeydown;
         delete element.boundKeyup;
         delete element.boundInput;
@@ -574,7 +591,7 @@
             coordinates;
         var info = this.getTriggerInfo(false, this.tribute.hasTrailingSpace, true, this.tribute.allowSpaces, this.tribute.autocompleteMode);
 
-        if (typeof info !== 'undefined') {
+        if (typeof info !== "undefined") {
           if (!this.tribute.positionMenu) {
             this.tribute.menu.style.cssText = "display: block;";
             return;
@@ -588,12 +605,12 @@
 
           this.tribute.menu.style.cssText = "top: ".concat(coordinates.top, "px;\n                                     left: ").concat(coordinates.left, "px;\n                                     right: ").concat(coordinates.right, "px;\n                                     bottom: ").concat(coordinates.bottom, "px;\n                                     position: absolute;\n                                     display: block;");
 
-          if (coordinates.left === 'auto') {
-            this.tribute.menu.style.left = 'auto';
+          if (coordinates.left === "auto") {
+            this.tribute.menu.style.left = "auto";
           }
 
-          if (coordinates.top === 'auto') {
-            this.tribute.menu.style.top = 'auto';
+          if (coordinates.top === "auto") {
+            this.tribute.menu.style.top = "auto";
           }
 
           if (scrollTo) this.scrollIntoView();
@@ -609,13 +626,13 @@
             var menuIsOffScreenVertically = window.innerHeight > menuDimensions.height && (menuIsOffScreen.top || menuIsOffScreen.bottom);
 
             if (menuIsOffScreenHorizontally || menuIsOffScreenVertically) {
-              _this.tribute.menu.style.cssText = 'display: none';
+              _this.tribute.menu.style.cssText = "display: none";
 
               _this.positionMenuAtCaret(scrollTo);
             }
           }, 0);
         } else {
-          this.tribute.menu.style.cssText = 'display: none';
+          this.tribute.menu.style.cssText = "display: none";
         }
       }
     }, {
@@ -663,7 +680,7 @@
 
         if (info !== undefined) {
           var context = this.tribute.current;
-          var replaceEvent = new CustomEvent('tribute-replaced', {
+          var replaceEvent = new CustomEvent("tribute-replaced", {
             detail: {
               item: item,
               instance: context,
@@ -674,7 +691,7 @@
 
           if (!this.isContentEditable(context.element)) {
             var myField = this.tribute.current.element;
-            var textSuffix = typeof this.tribute.replaceTextSuffix == 'string' ? this.tribute.replaceTextSuffix : ' ';
+            var textSuffix = typeof this.tribute.replaceTextSuffix == "string" ? this.tribute.replaceTextSuffix : " ";
             text += textSuffix;
             var startPos = info.mentionPosition;
             var endPos = info.mentionPosition + info.mentionText.length + textSuffix.length;
@@ -688,7 +705,7 @@
             myField.selectionEnd = startPos + text.length;
           } else {
             // add a space to the end of the pasted text
-            var _textSuffix = typeof this.tribute.replaceTextSuffix == 'string' ? this.tribute.replaceTextSuffix : '\xA0';
+            var _textSuffix = typeof this.tribute.replaceTextSuffix == "string" ? this.tribute.replaceTextSuffix : "\xA0";
 
             text += _textSuffix;
 
@@ -701,7 +718,7 @@
             this.pasteHtml(text, info.mentionPosition, _endPos);
           }
 
-          context.element.dispatchEvent(new CustomEvent('input', {
+          context.element.dispatchEvent(new CustomEvent("input", {
             bubbles: true
           }));
           context.element.dispatchEvent(replaceEvent);
@@ -716,7 +733,7 @@
         range.setStart(sel.anchorNode, startPos);
         range.setEnd(sel.anchorNode, endPos);
         range.deleteContents();
-        var el = this.getDocument().createElement('div');
+        var el = this.getDocument().createElement("div");
         el.innerHTML = html;
         var frag = this.getDocument().createDocumentFragment(),
             node,
@@ -741,6 +758,10 @@
       value: function getWindowSelection() {
         if (this.tribute.collection.iframe) {
           return this.tribute.collection.iframe.contentWindow.getSelection();
+        }
+
+        if (this.tribute.collection[0].shadowRoot) {
+          return this.tribute.collection[0].shadowRoot.getSelection();
         }
 
         return window.getSelection();
@@ -772,7 +793,7 @@
           var i;
           var ce = selected.contentEditable;
 
-          while (selected !== null && ce !== 'true') {
+          while (selected !== null && ce !== "true") {
             i = this.getNodePositionInParent(selected);
             path.push(i);
             selected = selected.parentNode;
@@ -796,7 +817,7 @@
       key: "getTextPrecedingCurrentSelection",
       value: function getTextPrecedingCurrentSelection() {
         var context = this.tribute.current,
-            text = '';
+            text = "";
 
         if (!this.isContentEditable(context.element)) {
           var textComponent = this.tribute.current.element;
@@ -809,6 +830,7 @@
             }
           }
         } else {
+          // this returns the wrapper, not the actual render root
           var selectedElem = this.getWindowSelection().anchorNode;
 
           if (selectedElem != null) {
@@ -826,8 +848,6 @@
     }, {
       key: "getLastWordInText",
       value: function getLastWordInText(text) {
-        text = text.replace(/\u00A0/g, ' '); // https://stackoverflow.com/questions/29850407/how-do-i-replace-unicode-character-u00a0-with-a-space-in-javascript
-
         var wordsArray;
 
         if (this.tribute.autocompleteSeparator) {
@@ -836,8 +856,8 @@
           wordsArray = text.split(/\s+/);
         }
 
-        var worldsCount = wordsArray.length - 1;
-        return wordsArray[worldsCount].trim();
+        var wordsCount = wordsArray.length - 1;
+        return wordsArray[wordsCount];
       }
     }, {
       key: "getTriggerInfo",
@@ -886,11 +906,11 @@
             }
           });
 
-          if (mostRecentTriggerCharPos >= 0 && (mostRecentTriggerCharPos === 0 || !requireLeadingSpace || /[\xA0\s]/g.test(effectiveRange.substring(mostRecentTriggerCharPos - 1, mostRecentTriggerCharPos)))) {
+          if (mostRecentTriggerCharPos >= 0 && (mostRecentTriggerCharPos === 0 || !requireLeadingSpace || /\s/.test(effectiveRange.substring(mostRecentTriggerCharPos - 1, mostRecentTriggerCharPos)))) {
             var currentTriggerSnippet = effectiveRange.substring(mostRecentTriggerCharPos + triggerChar.length, effectiveRange.length);
             triggerChar = effectiveRange.substring(mostRecentTriggerCharPos, mostRecentTriggerCharPos + triggerChar.length);
             var firstSnippetChar = currentTriggerSnippet.substring(0, 1);
-            var leadingSpace = currentTriggerSnippet.length > 0 && (firstSnippetChar === ' ' || firstSnippetChar === '\xA0');
+            var leadingSpace = currentTriggerSnippet.length > 0 && (firstSnippetChar === " " || firstSnippetChar === "\xA0");
 
             if (hasTrailingSpace) {
               currentTriggerSnippet = currentTriggerSnippet.trim();
@@ -915,7 +935,7 @@
     }, {
       key: "lastIndexWithLeadingSpace",
       value: function lastIndexWithLeadingSpace(str, trigger) {
-        var reversedStr = str.split('').reverse().join('');
+        var reversedStr = str.split("").reverse().join("");
         var index = -1;
 
         for (var cidx = 0, len = str.length; cidx < len; cidx++) {
@@ -941,7 +961,7 @@
     }, {
       key: "isContentEditable",
       value: function isContentEditable(element) {
-        return element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA';
+        return element.nodeName !== "INPUT" && element.nodeName !== "TEXTAREA";
       }
     }, {
       key: "isMenuOffScreen",
@@ -951,10 +971,10 @@
         var doc = document.documentElement;
         var windowLeft = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
         var windowTop = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0);
-        var menuTop = typeof coordinates.top === 'number' ? coordinates.top : windowTop + windowHeight - coordinates.bottom - menuDimensions.height;
-        var menuRight = typeof coordinates.right === 'number' ? coordinates.right : coordinates.left + menuDimensions.width;
-        var menuBottom = typeof coordinates.bottom === 'number' ? coordinates.bottom : coordinates.top + menuDimensions.height;
-        var menuLeft = typeof coordinates.left === 'number' ? coordinates.left : windowLeft + windowWidth - coordinates.right - menuDimensions.width;
+        var menuTop = typeof coordinates.top === "number" ? coordinates.top : windowTop + windowHeight - coordinates.bottom - menuDimensions.height;
+        var menuRight = typeof coordinates.right === "number" ? coordinates.right : coordinates.left + menuDimensions.width;
+        var menuBottom = typeof coordinates.bottom === "number" ? coordinates.bottom : coordinates.top + menuDimensions.height;
+        var menuLeft = typeof coordinates.left === "number" ? coordinates.left : windowLeft + windowWidth - coordinates.right - menuDimensions.width;
         return {
           top: menuTop < Math.floor(windowTop),
           right: menuRight > Math.ceil(windowLeft + windowWidth),
@@ -981,22 +1001,22 @@
     }, {
       key: "getTextAreaOrInputUnderlinePosition",
       value: function getTextAreaOrInputUnderlinePosition(element, position, flipped) {
-        var properties = ['direction', 'boxSizing', 'width', 'height', 'overflowX', 'overflowY', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch', 'fontSize', 'fontSizeAdjust', 'lineHeight', 'fontFamily', 'textAlign', 'textTransform', 'textIndent', 'textDecoration', 'letterSpacing', 'wordSpacing'];
+        var properties = ["direction", "boxSizing", "width", "height", "overflowX", "overflowY", "borderTopWidth", "borderRightWidth", "borderBottomWidth", "borderLeftWidth", "paddingTop", "paddingRight", "paddingBottom", "paddingLeft", "fontStyle", "fontVariant", "fontWeight", "fontStretch", "fontSize", "fontSizeAdjust", "lineHeight", "fontFamily", "textAlign", "textTransform", "textIndent", "textDecoration", "letterSpacing", "wordSpacing"];
         var isFirefox = window.mozInnerScreenX !== null;
-        var div = this.getDocument().createElement('div');
-        div.id = 'input-textarea-caret-position-mirror-div';
+        var div = this.getDocument().createElement("div");
+        div.id = "input-textarea-caret-position-mirror-div";
         this.getDocument().body.appendChild(div);
         var style = div.style;
         var computed = window.getComputedStyle ? getComputedStyle(element) : element.currentStyle;
-        style.whiteSpace = 'pre-wrap';
+        style.whiteSpace = "pre-wrap";
 
-        if (element.nodeName !== 'INPUT') {
-          style.wordWrap = 'break-word';
+        if (element.nodeName !== "INPUT") {
+          style.wordWrap = "break-word";
         } // position off-screen
 
 
-        style.position = 'absolute';
-        style.visibility = 'hidden'; // transfer the element's properties to the div
+        style.position = "absolute";
+        style.visibility = "hidden"; // transfer the element's properties to the div
 
         properties.forEach(function (prop) {
           style[prop] = computed[prop];
@@ -1004,19 +1024,19 @@
 
         if (isFirefox) {
           style.width = "".concat(parseInt(computed.width) - 2, "px");
-          if (element.scrollHeight > parseInt(computed.height)) style.overflowY = 'scroll';
+          if (element.scrollHeight > parseInt(computed.height)) style.overflowY = "scroll";
         } else {
-          style.overflow = 'hidden';
+          style.overflow = "hidden";
         }
 
         div.textContent = element.value.substring(0, position);
 
-        if (element.nodeName === 'INPUT') {
-          div.textContent = div.textContent.replace(/\s/g, ' ');
+        if (element.nodeName === "INPUT") {
+          div.textContent = div.textContent.replace(/\s/g, " ");
         }
 
-        var span = this.getDocument().createElement('span');
-        span.textContent = element.value.substring(position) || '.';
+        var span = this.getDocument().createElement("span");
+        span.textContent = element.value.substring(position) || ".";
         div.appendChild(span);
         var rect = element.getBoundingClientRect();
         var doc = document.documentElement;
@@ -1041,7 +1061,7 @@
 
         if (menuIsOffScreen.right) {
           coordinates.right = windowWidth - coordinates.left;
-          coordinates.left = 'auto';
+          coordinates.left = "auto";
         }
 
         var parentHeight = this.tribute.menuContainer ? this.tribute.menuContainer.offsetHeight : this.getDocument().body.offsetHeight;
@@ -1050,7 +1070,7 @@
           var parentRect = this.tribute.menuContainer ? this.tribute.menuContainer.getBoundingClientRect() : this.getDocument().body.getBoundingClientRect();
           var scrollStillAvailable = parentHeight - (windowHeight - parentRect.top);
           coordinates.bottom = scrollStillAvailable + (windowHeight - rect.top - span.offsetTop);
-          coordinates.top = 'auto';
+          coordinates.top = "auto";
         }
 
         menuIsOffScreen = this.isMenuOffScreen(coordinates, menuDimensions);
@@ -1093,7 +1113,7 @@
         var menuIsOffScreen = this.isMenuOffScreen(coordinates, menuDimensions);
 
         if (menuIsOffScreen.right) {
-          coordinates.left = 'auto';
+          coordinates.left = "auto";
           coordinates.right = windowWidth - rect.left - windowLeft;
         }
 
@@ -1102,7 +1122,7 @@
         if (menuIsOffScreen.bottom) {
           var parentRect = this.tribute.menuContainer ? this.tribute.menuContainer.getBoundingClientRect() : this.getDocument().body.getBoundingClientRect();
           var scrollStillAvailable = parentHeight - (windowHeight - parentRect.top);
-          coordinates.top = 'auto';
+          coordinates.top = "auto";
           coordinates.bottom = scrollStillAvailable + (windowHeight - rect.top);
         }
 
@@ -1132,7 +1152,7 @@
             clientRect;
         var maxScrollDisplacement = 100;
         var e = this.menu;
-        if (typeof e === 'undefined') return;
+        if (typeof e === "undefined") return;
 
         while (clientRect === undefined || clientRect.height === 0) {
           clientRect = e.getBoundingClientRect();
@@ -1349,6 +1369,8 @@
           loadingItemTemplate = _ref$loadingItemTempl === void 0 ? null : _ref$loadingItemTempl,
           _ref$iframe = _ref.iframe,
           iframe = _ref$iframe === void 0 ? null : _ref$iframe,
+          _ref$shadowRoot = _ref.shadowRoot,
+          shadowRoot = _ref$shadowRoot === void 0 ? null : _ref$shadowRoot,
           _ref$selectClass = _ref.selectClass,
           selectClass = _ref$selectClass === void 0 ? "highlight" : _ref$selectClass,
           _ref$containerClass = _ref.containerClass,
@@ -1418,6 +1440,8 @@
           trigger: trigger,
           // is it wrapped in an iframe
           iframe: iframe,
+          // is it wrapped in a web component
+          shadowRoot: shadowRoot,
           // class applied to selected item
           selectClass: selectClass,
           // class applied to the Container
@@ -1462,6 +1486,7 @@
           return {
             trigger: item.trigger || trigger,
             iframe: item.iframe || iframe,
+            shadowRoot: item.shadowRoot || shadowRoot,
             selectClass: item.selectClass || selectClass,
             containerClass: item.containerClass || containerClass,
             itemClass: item.itemClass || itemClass,
@@ -1547,10 +1572,8 @@
       key: "ensureEditable",
       value: function ensureEditable(element) {
         if (Tribute.inputTypes().indexOf(element.nodeName) === -1) {
-          if (element.contentEditable) {
-            element.contentEditable = true;
-          } else {
-            throw new Error("[Tribute] Cannot bind to " + element.nodeName);
+          if (!element.contentEditable) {
+            throw new Error("[Tribute] Cannot bind to " + element.nodeName + ", not contentEditable");
           }
         }
       }
@@ -1765,7 +1788,7 @@
       key: "selectItemAtIndex",
       value: function selectItemAtIndex(index, originalEvent) {
         index = parseInt(index);
-        if (typeof index !== "number" || isNaN(index)) return;
+        if (typeof index !== "number" || isNaN(index) || !originalEvent.target) return;
         var item = this.current.filteredItems[index];
         var content = this.current.collection.selectTemplate(item);
         if (content !== null) this.replaceText(content, originalEvent, item);
