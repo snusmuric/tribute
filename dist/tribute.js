@@ -200,7 +200,7 @@
       key: "click",
       value: function click(instance, event) {
         var tribute = instance.tribute;
-        var eventPath = event.path || event.path.composedPath && event.path.composedPath();
+        var eventPath = event.path || event.composedPath && event.composedPath();
         var eventTarget = Array.isArray(eventPath) && eventPath[0] !== undefined ? eventPath[0] : event.target;
 
         if (tribute.menu && tribute.menu.contains(eventTarget)) {
