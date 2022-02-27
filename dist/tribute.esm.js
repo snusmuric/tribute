@@ -145,9 +145,11 @@ class TributeEvents {
   }
 
   click(instance, event) {
-    let tribute = instance.tribute;
-    if (tribute.menu && tribute.menu.contains(event.target)) {
-      let li = event.target;
+    const tribute = instance.tribute;
+    const eventPath = event.path || (event.composedPath && event.composedPath());
+    const eventTarget = Array.isArray(eventPath) && eventPath[0] !== undefined ? eventPath[0] : event.target;
+    if (tribute.menu && tribute.menu.contains(eventTarget)) {
+      let li = eventTarget;
       event.preventDefault();
       event.stopPropagation();
       while (li.nodeName.toLowerCase() !== "li") {
